@@ -1,5 +1,6 @@
 import {__prod__} from './constants';
 import { Post } from './entities/Post';
+import { User } from './entities/User';
 import { Options } from '@mikro-orm/core';
 import path from 'path';
 
@@ -13,5 +14,5 @@ export default {
     user: 'postgres',
     password: 'postgres',
     type: 'postgresql',
-    entities: [Post]
+    entities: [Post, User]
 } as Options;

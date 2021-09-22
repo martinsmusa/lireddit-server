@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "run": "tsc && concurrently \"tsc -w\" \"nodemon --delay 500ms dist/index.js\""
+    "dev": "tsc && concurrently \"tsc -w\" \"nodemon --delay 500ms dist/index.js\"",
+    "create:migration": "npx mikro-orm migration:create"
   },
   "repository": {
     "type": "git",
@@ -32,6 +33,7 @@
     "@mikro-orm/migrations": "^4.5.9",
     "@mikro-orm/postgresql": "^4.5.9",
     "apollo-server-express": "^3.3.0",
+    "argon2": "^0.28.2",
     "express": "^4.17.1",
     "graphql": "^15.5.3",
     "pg": "^8.7.1",
