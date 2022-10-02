@@ -58,7 +58,10 @@ const main = async () => {
     apolloServer.applyMiddleware({
         app,
         cors: {
-            origin: ["http://localhost:3003/graphql", "https://studio.apollographql.com"],
+            origin: [
+                "http://localhost:3000",
+                "https://studio.apollographql.com"
+            ],
             credentials: true,
             exposedHeaders: '*'
         },
