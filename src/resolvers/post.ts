@@ -42,7 +42,7 @@ export class PostResolver {
             return null;
         }
 
-        post.title = title
+        post.title = title;
 
         await em.persistAndFlush(post);
 

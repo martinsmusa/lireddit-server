@@ -9,6 +9,7 @@ import {createClient} from "redis";
 import connectRedis from 'connect-redis';
 import session from 'express-session';
 import {MyContext} from "./types";
+import { USER_SESSION_COOKIE } from './constants';
 
 const main = async () => {
     const orm = await MikroORM.init(microConfig);
@@ -21,7 +22,7 @@ const main = async () => {
 
     app.use(
         session({
-            name: 'qid',
+            name: USER_SESSION_COOKIE,
             store: new RedisStore({
                 client: redisClient,
                 disableTouch: true

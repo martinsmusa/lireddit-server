@@ -1,39 +1,40 @@
-import {Arg, Ctx, Field, InputType, Mutation, ObjectType, Query, Resolver} from 'type-graphql';
+import { Arg, Ctx, Field, InputType, Mutation, ObjectType, Query, Resolver } from 'type-graphql';
 import argon2 from 'argon2';
-import {MyContext} from '../types';
-import {User} from '../entities/User';
+import { MyContext } from '../types';
+import { User } from '../entities/User';
+import { USER_SESSION_COOKIE } from '../constants';
 
 @InputType()
 class UsernamePasswordInput {
     @Field()
-    username: string
+    username: string;
     @Field()
-    password: string
+    password: string;
 }
 
 @ObjectType()
 class FieldError {
     @Field()
-    field: string
+    field: string;
 
     @Field()
-    message: string
+    message: string;
 }
 
 @ObjectType()
 class UserResponse {
-    @Field(() => [FieldError], {nullable: true})
-    errors?: FieldError[]
+    @Field(() => [FieldError], { nullable: true })
+    errors?: FieldError[];
 
-    @Field(() => User, {nullable: true})
-    user?: User
+    @Field(() => User, { nullable: true })
+    user?: User;
 }
 
 @Resolver()
 export class UserResolver {
-    @Query(() => User || null, {nullable: true})
+    @Query(() => User || null, { nullable: true })
     async me(
-        @Ctx() {em, req}: MyContext
+        @Ctx() { em, req }: MyContext
     ) {
         const id = req.session.userId;
 
@@ -42,15 +43,15 @@ export class UserResolver {
             return null;
         }
 
-        return em.findOneOrFail(User, {id});
+        return em.findOneOrFail(User, { id });
     }
 
     @Mutation(() => UserResponse)
     async register(
         @Arg('options') options: UsernamePasswordInput,
-        @Ctx() {req, em}: MyContext
+        @Ctx() { req, em }: MyContext
     ): Promise<UserResponse> {
-        const {username, password} = options;
+        const { username, password } = options;
         const hashedPassword = await argon2.hash(password);
 
         if (username.trim().length <= 2) {
@@ -59,7 +60,7 @@ export class UserResolver {
                     field: 'username',
                     message: 'Username must be at least 2 characters long'
                 }]
-            }
+            };
         }
 
         if (password.length <= 2) {
@@ -68,10 +69,10 @@ export class UserResolver {
                     field: 'password',
                     message: 'Password must be at least 2 characters long'
                 }]
-            }
+            };
         }
 
-        const user = em.create(User, {username, password: hashedPassword});
+        const user = em.create(User, { username, password: hashedPassword });
 
         try {
             await em.persistAndFlush(user);
@@ -83,22 +84,22 @@ export class UserResolver {
                         field: 'username',
                         message: 'User already exists'
                     }]
-                }
+                };
             }
         }
 
         req.session.userId = user.id;
 
-        return {user};
+        return { user };
     }
 
     @Mutation(() => UserResponse)
     async login(
         @Arg('auth', () => UsernamePasswordInput) auth: UsernamePasswordInput,
-        @Ctx() {em, req}: MyContext
+        @Ctx() { em, req }: MyContext
     ): Promise<UserResponse> {
-        const {username, password: formPassword} = auth;
-        const user = await em.findOne(User, {username});
+        const { username, password: formPassword } = auth;
+        const user = await em.findOne(User, { username });
 
         if (!user) {
             return {
@@ -106,10 +107,10 @@ export class UserResolver {
                     field: 'username',
                     message: 'User with this username not found'
                 }]
-            }
+            };
         }
 
-        const {password: loadedPasswordHash} = user;
+        const { password: loadedPasswordHash } = user;
         const passwordMatch = await argon2.verify(loadedPasswordHash, formPassword);
 
         if (!passwordMatch) {
@@ -118,13 +119,28 @@ export class UserResolver {
                     field: 'password',
                     message: 'Passwords did not match'
                 }]
-            }
+            };
         }
 
         req.session.userId = user.id;
 
-        return {
-            user
-        }
+        return { user };
+    }
+
+    @Mutation(() => Boolean)
+    logout(
+        @Ctx() { req, res }: MyContext
+    ) {
+        return new Promise(resolve => req.session.destroy(err => {
+            res.clearCookie(USER_SESSION_COOKIE);
+
+            if (err) {
+                console.error(err);
+
+                return resolve(false);
+            }
+
+            resolve(true);
+        }));
     }
 }
