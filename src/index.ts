@@ -5,7 +5,7 @@ import {buildSchema} from 'type-graphql';
 import {ApolloServer} from 'apollo-server-express';
 import {PostResolver} from './resolvers/post';
 import {UserResolver} from './resolvers/user';
-import {createClient} from "redis";
+import Redis from "ioredis";
 import connectRedis from 'connect-redis';
 import session from 'express-session';
 import {MyContext} from "./types";
@@ -15,7 +15,7 @@ const main = async () => {
     const orm = await MikroORM.init(microConfig);
     const app = express();
     const RedisStore = connectRedis(session);
-    const redisClient = createClient({legacyMode: true});
+    const redisClient = new Redis();
 
     redisClient.connect().catch((err) => console.error('Redis conection error: ' + err?.message));
     app.set("trust proxy", 1);
@@ -49,7 +49,8 @@ const main = async () => {
         context: ({req, res}): MyContext => ({
             em: orm.em,
             req,
-            res
+            res,
+            redis: redisClient
         })
     });
 
